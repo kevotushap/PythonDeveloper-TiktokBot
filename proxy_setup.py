@@ -60,10 +60,30 @@ def test_proxies_concurrently(proxy_list, max_workers=10):
     return valid_proxies
 
 
-# Example usage: Load and test proxies from a file
+def save_proxies_to_file(proxies, file_path):
+    """
+    Save valid proxies to a text file.
+
+    :param proxies: A list of valid proxies to save.
+    :param file_path: Path to the file where proxies will be saved.
+    """
+    try:
+        with open(file_path, 'w') as file:
+            for proxy in proxies:
+                file.write(f"{proxy}\n")
+        print(f"Valid proxies have been saved to {file_path}")
+    except Exception as e:
+        print(f"An error occurred while saving proxies: {e}")
+
+
+# Example usage: Load, test, and save proxies
 if __name__ == "__main__":
     proxy_file_path = 'proxies.txt'
+    valid_proxies_file_path = 'valid_proxies.txt'
+
     proxies = load_proxies(proxy_file_path)
     if proxies:
-        working_proxies = test_proxies_concurrently(proxies)
-        print(f"Working proxies: {working_proxies}")
+        valid_proxies = test_proxies_concurrently(proxies)
+        save_proxies_to_file(valid_proxies, valid_proxies_file_path)
+
+        print(f"Working proxies: {valid_proxies}")
