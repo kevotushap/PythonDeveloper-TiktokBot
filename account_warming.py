@@ -1,78 +1,116 @@
-import time
+import requests
 import random
+import time
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
 from proxy_setup import load_proxies
 
 # Load proxies from the external file
 proxy_file_path = 'proxies.txt'
 proxies = load_proxies(proxy_file_path)
 
-def initialize_driver(proxy=None):
+signup_url = "https://www.tiktok.com/signup"
+
+def solve_captcha(captcha_image_url):
+    api_url = "https://www.sadcaptcha.com/api/solve"
+    data = {
+        'image_url': captcha_image_url,
+        'ref': 'angell'  # Replace with your actual referral code if applicable
+    }
+    response = requests.post(api_url, data=data)
+    if response.status_code == 200:
+        solution = response.json().get('solution')
+        if solution:
+            return solution
+        else:
+            raise Exception("CAPTCHA solution not found in the response.")
+    else:
+        raise Exception(f"Failed to solve CAPTCHA. Status Code: {response.status_code}")
+
+def get_captcha_image_url(signup_url):
+    # Configure WebDriver
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run in headless mode
-
-    # Configure proxy if provided
-    if proxy:
-        chrome_options.add_argument(f'--proxy-server={proxy}')
-
+    chrome_options.add_argument("--headless")  # Run in headless mode (no browser window)
     service = Service("/path/to/chromedriver")  # Update with path to your ChromeDriver
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    return driver
 
-def login_account(driver, username, password):
-    login_url = "https://www.tiktok.com/login"
-    driver.get(login_url)
+    try:
+        driver.get(signup_url)
 
-    time.sleep(5)  # Wait for the page to load
+        # Give the page some time to load
+        time.sleep(5)
 
-    # Locate and fill in the login form (update selectors as needed)
-    username_field = driver.find_element(By.NAME, "username")
-    password_field = driver.find_element(By.NAME, "password")
-    login_button = driver.find_element(By.XPATH, '//button[text()="Login"]')
+        # Locate the CAPTCHA image element (Update the selector based on TikTok's actual page structure)
+        captcha_image_element = driver.find_element(By.CSS_SELECTOR, "img.captcha-image")
+        captcha_image_url = captcha_image_element.get_attribute("src")
+        return captcha_image_url
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return None
+    finally:
+        driver.quit()
 
-    username_field.send_keys(username)
-    password_field.send_keys(password)
-    login_button.click()
+def generate_random_username():
+    return "user_" + str(random.randint(1000000, 9999999))
 
-    time.sleep(10)  # Wait for login to complete
+def generate_random_password():
+    return "Pass_" + str(random.randint(1000000, 9999999))
 
-def warm_up_account(driver):
-    # Example activities to warm up an account
-    for _ in range(5):
-        # Visit different pages
-        driver.get("https://www.tiktok.com/trending")
-        time.sleep(random.randint(5, 15))  # Random delay
+def create_account(proxy):
+    try:
+        captcha_image_url = get_captcha_image_url(signup_url)
+        if not captcha_image_url:
+            print("Failed to retrieve CAPTCHA image URL.")
+            return None
 
-        # Interact with content (like, follow, etc.)
-        # Example of scrolling
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(random.randint(5, 15))
+        captcha_solution = solve_captcha(captcha_image_url)
 
-        # Add more interactions as needed (like, comment, follow, etc.)
+        if captcha_solution:
+            username = generate_random_username()
+            password = generate_random_password()
+            payload = {
+                "username": username,
+                "password": password,
+                "captcha_solution": captcha_solution,
+                # Add other required fields for the signup form
+            }
 
-def main():
-    accounts = [
-        {"username": f"user{i}", "password": f"pass{i}"} for i in range(100)
-    ]
+            response = requests.post(signup_url, data=payload, proxies={"http": proxy, "https": proxy})
 
-    for i, account in enumerate(accounts):
-        proxy = random.choice(proxies)  # Select a random proxy
-        driver = initialize_driver(proxy=proxy)
-        try:
-            login_account(driver, account["username"], account["password"])
-            warm_up_account(driver)
-        except Exception as e:
-            print(f"An error occurred with account {account['username']}: {e}")
-        finally:
-            driver.quit()
+            if response.status_code == 200:
+                print(f"Account created successfully: {username}")
+                return username, password
+            else:
+                print(f"Failed to create account: HTTP {response.status_code} - {response.text}")
+                return None
+        else:
+            print("Captcha solving failed.")
+            return None
+    except Exception as e:
+        print(f"An error occurred during account creation: {e}")
+        return None
 
-        # Optional: Take a break every 10 accounts to avoid detection
-        if (i + 1) % 10 == 0:
-            print(f"{i + 1} accounts processed. Taking a short break.")
+def create_bulk_accounts(num_accounts):
+    created_accounts = []
+    for i in range(num_accounts):
+        proxy = random.choice(proxies)
+        account = create_account(proxy)
+        if account:
+            created_accounts.append(account)
+
+        # Take a break every 10 accounts to avoid detection
+        if i % 10 == 0 and i > 0:
+            print(f"{i} accounts created. Taking a short break.")
             time.sleep(random.randint(30, 60))  # Pause between batches
 
-if __name__ == "__main__":
-    main()
+    return created_accounts
+
+def save_accounts(accounts, filename="created_accounts.txt"):
+    with open(filename, "w") as f:
+        for username, password in accounts:
+            f.write(f"{username},{password}\n")
+
+    print(f"Accounts saved to {filename}")
+
