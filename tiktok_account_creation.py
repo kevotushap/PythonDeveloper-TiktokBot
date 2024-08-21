@@ -2,27 +2,19 @@ import requests
 import random
 import time
 from captcha_bypass import solve_captcha
-from proxy_setup import load_proxies
-
-# Load proxies from the external file
-proxy_file_path = 'proxies.txt'
-proxies = load_proxies(proxy_file_path)
 
 signup_url = "https://www.tiktok.com/signup"
-
 
 def generate_random_username():
     """Generate a random username for TikTok account creation."""
     return f"user_{random.randint(1000000, 9999999)}"
 
-
 def generate_random_password():
     """Generate a random password for TikTok account creation."""
     return f"Pass_{random.randint(1000000, 9999999)}"
 
-
-def create_account(proxy):
-    """Create a single TikTok account using the provided proxy."""
+def create_account():
+    """Create a single TikTok account without using a proxy."""
     try:
         captcha_solution = solve_captcha("https://example.com/captcha_image.png")
 
@@ -38,7 +30,7 @@ def create_account(proxy):
             "captcha_solution": captcha_solution,
             # Add other required fields
         }
-        response = requests.post(signup_url, data=payload, proxies={"http": proxy, "https": proxy})
+        response = requests.post(signup_url, data=payload)
 
         if response.status_code == 200:
             print(f"Account created successfully: {username}")
@@ -51,13 +43,11 @@ def create_account(proxy):
         print(f"Error during account creation: {e}")
         return None
 
-
 def create_bulk_accounts(num_accounts):
-    """Create multiple TikTok accounts using a pool of proxies."""
+    """Create multiple TikTok accounts without using proxies."""
     created_accounts = []
     for i in range(num_accounts):
-        proxy = random.choice(proxies)
-        account = create_account(proxy)
+        account = create_account()
         if account:
             created_accounts.append(account)
 
@@ -66,7 +56,6 @@ def create_bulk_accounts(num_accounts):
             time.sleep(random.uniform(30, 60))  # Pause between batches
 
     return created_accounts
-
 
 def save_accounts(accounts, filename="created_accounts.txt"):
     """Save the created accounts to a file."""
@@ -77,7 +66,6 @@ def save_accounts(accounts, filename="created_accounts.txt"):
         print(f"Accounts saved to {filename}")
     except IOError as e:
         print(f"Failed to save accounts to {filename}: {e}")
-
 
 if __name__ == "__main__":
     print("Starting bulk account creation...")
