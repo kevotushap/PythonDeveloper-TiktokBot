@@ -51,91 +51,66 @@ Copy code
    git clone https://github.com/yourusername/PythonDeveloper-TiktokBot.git
    cd PythonDeveloper-TiktokBot
    
+markdown
+Copy code
+## Installation
+
+1. **Clone the Repository:**
+
+   ```bash
+   git clone https://github.com/yourusername/PythonDeveloper-TiktokBot.git
+   cd PythonDeveloper-TiktokBot
 Install Dependencies:
 
 Ensure you have Python 3.x installed, then run:
 
 bash
 Copy code
-
 pip install -r requirements.txt
-
 Setup Proxies:
 
 Add your proxies to proxies.txt (one proxy per line):
 
 perl
-
 Copy code
-
 http://username:password@proxy1.com:port
 http://username:password@proxy2.com:port
 ...
-
 Configure CAPTCHA Bypass:
 
-
 Sign up with sadcaptcha.com.
-
 Update the solve_captcha function in captcha_bypass.py with your API details.
-
 Usage
-
-
 Run the Bot:
 
 The main script to start the bot is run.py. Execute it using:
 
-
 bash
-
 Copy code
-
 python run.py
-
 Creating Accounts:
-
 
 The bot will create TikTok accounts using the proxies listed in proxies.txt and save the credentials in created_accounts.txt.
 
-
 Warming Up Accounts:
-
 
 After creating the accounts, the bot will warm them up by interacting with TikTok videos.
 
-
 Mass Posting:
-
 
 Once the accounts are warmed up, use the mass posting functionality to post content to multiple accounts.
 
-
 Configuration
-
-
 Proxies: Manage proxies in proxies.txt.
-
 Account Credentials: Stored in created_accounts.txt.
-
 CAPTCHA Bypass: Configure API details in captcha_bypass.py.
-
-
 Contributing
-
 We welcome contributions! If you would like to enhance this project, please fork the repository and submit a pull request.
 
-
 License
-
 This project is licensed under the MIT License. See LICENSE for more details.
 
-
 Acknowledgements
-
-
 Selenium for browser automation.
-
 sadcaptcha.com for CAPTCHA solving API.
-
 TikTok for the platform.
