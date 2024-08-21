@@ -12,17 +12,24 @@ signup_url = "https://www.tiktok.com/signup"
 
 
 def generate_random_username():
-    return "user_" + str(random.randint(1000000, 9999999))
+    """Generate a random username for TikTok account creation."""
+    return f"user_{random.randint(1000000, 9999999)}"
 
 
 def generate_random_password():
-    return "Pass_" + str(random.randint(1000000, 9999999))
+    """Generate a random password for TikTok account creation."""
+    return f"Pass_{random.randint(1000000, 9999999)}"
 
 
 def create_account(proxy):
-    captcha_solution = solve_captcha("https://example.com/captcha_image.png")
+    """Create a single TikTok account using the provided proxy."""
+    try:
+        captcha_solution = solve_captcha("https://example.com/captcha_image.png")
 
-    if captcha_solution:
+        if not captcha_solution:
+            print("Captcha solving failed.")
+            return None
+
         username = generate_random_username()
         password = generate_random_password()
         payload = {
@@ -32,18 +39,21 @@ def create_account(proxy):
             # Add other required fields
         }
         response = requests.post(signup_url, data=payload, proxies={"http": proxy, "https": proxy})
+
         if response.status_code == 200:
             print(f"Account created successfully: {username}")
             return username, password
         else:
-            print(f"Failed to create account: {response.status_code}")
+            print(f"Failed to create account: {response.status_code} - {response.text}")
             return None
-    else:
-        print("Captcha solving failed.")
+
+    except Exception as e:
+        print(f"Error during account creation: {e}")
         return None
 
 
 def create_bulk_accounts(num_accounts):
+    """Create multiple TikTok accounts using a pool of proxies."""
     created_accounts = []
     for i in range(num_accounts):
         proxy = random.choice(proxies)
@@ -51,14 +61,29 @@ def create_bulk_accounts(num_accounts):
         if account:
             created_accounts.append(account)
 
-        if i % 10 == 0 and i > 0:
+        if i > 0 and i % 10 == 0:
             print(f"{i} accounts created. Taking a short break.")
-            time.sleep(random.randint(30, 60))  # Pause between batches
+            time.sleep(random.uniform(30, 60))  # Pause between batches
 
     return created_accounts
 
 
 def save_accounts(accounts, filename="created_accounts.txt"):
-    with open(filename, "w") as f:
-        for username, password in accounts:
-            f.write(f"{username},{password}\n")
+    """Save the created accounts to a file."""
+    try:
+        with open(filename, "w") as f:
+            for username, password in accounts:
+                f.write(f"{username},{password}\n")
+        print(f"Accounts saved to {filename}")
+    except IOError as e:
+        print(f"Failed to save accounts to {filename}: {e}")
+
+
+if __name__ == "__main__":
+    print("Starting bulk account creation...")
+    accounts = create_bulk_accounts(100)  # Specify the number of accounts to create
+    if accounts:
+        save_accounts(accounts)
+        print("Account creation completed.")
+    else:
+        print("No accounts were created.")
